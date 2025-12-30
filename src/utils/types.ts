@@ -7,6 +7,7 @@ export interface TimeSeriesData {
 
 export interface AnalysisResults {
   autocorrelations: { lag: number; value: number }[];
+  pacf: Array<{ lag: number; value: number }>;
   trendCoefficient: number;
   hasTrend: boolean;
   aiFeedback?: string;
