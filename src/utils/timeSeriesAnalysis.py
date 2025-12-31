@@ -3,6 +3,7 @@
 from typing import TypedDict, List
 from scipy.optimize import fsolve, minimize
 import numpy as np
+from statsmodels.tsa.stattools import pacf  # PACF (partial autocorrelation) utility
 
 
 class TimeSeriesData(TypedDict):
@@ -19,6 +20,7 @@ class AnalysisResults(TypedDict):
     autocorrelations: List[AutocorrelationResult]
     trendCoefficient: float
     hasTrend: bool
+    pacf: List[AutocorrelationResult]
 
 
 def mean(values: List[float]) -> float:
@@ -64,6 +66,19 @@ def analyze_time_series(data: List[float]) -> AnalysisResults:
         for i in range(10)
     ]
 
+    # Calculate PACF values using statsmodels
+    # nlags=10 matches your team's ACF lags
+    try:
+        raw_pacf = pacf(data, nlags=10, method='ols')
+        # We skip index 0 because PACF at lag 0 is always 1.0
+        pacf_results = [
+            {"lag": i, "value": float(val)} 
+            for i, val in enumerate(raw_pacf) if i > 0
+        ]
+    except:
+        # Fallback if data is too short for 10 lags
+        pacf_results = []
+
     # Calculate trend coefficient
     trend_coefficient = calculate_trend_coefficient(data)
 
@@ -73,6 +88,7 @@ def analyze_time_series(data: List[float]) -> AnalysisResults:
     return {
         "autocorrelations": autocorrelations,
         "trendCoefficient": trend_coefficient,
+        "pacf": pacf_results,
         "hasTrend": has_trend,
     }
 
